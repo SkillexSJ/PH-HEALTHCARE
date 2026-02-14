@@ -6,3 +6,4 @@ dist
 
 /src/generated
 workflow.md
+node_modules
