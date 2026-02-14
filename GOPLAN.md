@@ -10,13 +10,14 @@ This plan proposes a **Modular Monolith** architecture using **Fiber** (web fram
 
 ## 2. Recommended Tech Stack
 
-| Component | Current (Node.js) | Recommended (Go) | Why? |
-| :--- | :--- | :--- | :--- |
-| **Language** | TypeScript | **Go (1.23+)** | Strong static typing, compilation, and high concurrency. |
-| **Web Framework** | Express.js | **Fiber (v2/v3)** | Fiber is inspired by Express. It matches the routing style and middleware patterns you are used to, but is built on top of `fasthttp` for extreme performance. |
-| **Database ORM** | Prisma | **GORM** | GORM is the most feature-rich ORM in Go. It supports hooks, preloading, associations, and auto-migrations, similar to Prisma. *(Alternative: **Ent** for complex graph relations)* |
-| **Validation** | Zod | **go-playground/validator** | The de-facto standard for struct validation in Go. Uses struct tags (e.g., `validate:"required,email"`). |
-| **Config** | dotenv | **Viper** | An enterprise-grade configuration solution. It handles environment variables, config files (JSON/YAML/TOML), and defaults seamlessly. |
+| Component         | Current (Node.js) | Recommended (Go)            | Why?                                                                                                                                                                               |
+| :---------------- | :---------------- | :-------------------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Language**      | TypeScript        | **Go (1.23+)**              | Strong static typing, compilation, and high concurrency.                                                                                                                           |
+| **Web Framework** | Express.js        | **Fiber (v2/v3)**           | Fiber is inspired by Express. It matches the routing style and middleware patterns you are used to, but is built on top of `fasthttp` for extreme performance.                     |
+| **Database ORM**  | Prisma            | **GORM**                    | GORM is the most feature-rich ORM in Go. It supports hooks, preloading, associations, and auto-migrations, similar to Prisma. _(Alternative: **Ent** for complex graph relations)_ |
+| **Validation**    | Zod               | **go-playground/validator** | The de-facto standard for struct validation in Go. Uses struct tags (e.g., `validate:"required,email"`).                                                                           |
+| **Config**        | dotenv            | **Viper**                   | An enterprise-grade configuration solution. It handles environment variables, config files (JSON/YAML/TOML), and defaults seamlessly.                                              |
+
 | **Authentication** | Better Auth | **golang-jwt/jwt** | Standard JWT implementation. For OAuth (Google/Facebook), use **Goth**. |
 | **Logging** | (Console/Custom) | **Zap** (by Uber) | Blazing fast, structured, leveled logging. Essential for production debugging. |
 | **Documentation** | (Manual?) | **Swagger (Swaggo)** | Generates Swagger/OpenAPI documentation directly from code comments. |
@@ -62,50 +63,57 @@ ph-healthcare-go/
 ## 4. Implementation Details & Migration Guide
 
 ### Phase 1: Setup & Core Infrastructure
-*   Initialize Go module: `go mod init github.com/yourusername/ph-healthcare-go`
-*   Set up **Viper** for environment variables.
-*   Set up **GORM** with PostgreSQL connection.
-*   Implement a custom **Response** struct (similar to your `sendResponse` util) for consistent JSON output.
-*   Set up **Fiber** app with basic middleware (Logger, Recover, CORS).
+
+- Initialize Go module: `go mod init github.com/yourusername/ph-healthcare-go`
+- Set up **Viper** for environment variables.
+- Set up **GORM** with PostgreSQL connection.
+- Implement a custom **Response** struct (similar to your `sendResponse` util) for consistent JSON output.
+- Set up **Fiber** app with basic middleware (Logger, Recover, CORS).
 
 ### Phase 2: User Module & Authentication
-*   **Models:** Define `User` struct with GORM tags.
-*   **Repository:** Create `Create`, `FindByEmail` methods.
-*   **UseCase:** Implement `Register`, `Login` logic (Password hashing using `bcrypt`).
-*   **JWT:** Create utility to sign and verify tokens.
-*   **Handler:** Map `POST /auth/login` to the handler.
+
+- **Models:** Define `User` struct with GORM tags.
+- **Repository:** Create `Create`, `FindByEmail` methods.
+- **UseCase:** Implement `Register`, `Login` logic (Password hashing using `bcrypt`).
+- **JWT:** Create utility to sign and verify tokens.
+- **Handler:** Map `POST /auth/login` to the handler.
 
 ### Phase 3: Role-Based Access Control (RBAC)
-*   Create a robust Middleware `AuthMiddleware(roles ...string)`.
-*   Parse the JWT from the header.
-*   Check if the user's role matches the allowed roles.
-*   Store user context in `c.Locals("user", claims)`.
+
+- Create a robust Middleware `AuthMiddleware(roles ...string)`.
+- Parse the JWT from the header.
+- Check if the user's role matches the allowed roles.
+- Store user context in `c.Locals("user", claims)`.
 
 ### Phase 4: Feature Modules (Doctor, Admin, Patient)
-*   Migrate modules one by one.
-*   **Doctor Module:**
-    *   Define `Doctor` struct with relations (Specialties).
-    *   Use GORM's `Preload` to fetch related data (similar to Prisma `include`).
-    *   Implement Soft Delete (GORM supports `gorm.DeletedAt` field out of the box).
+
+- Migrate modules one by one.
+- **Doctor Module:**
+  - Define `Doctor` struct with relations (Specialties).
+  - Use GORM's `Preload` to fetch related data (similar to Prisma `include`).
+  - Implement Soft Delete (GORM supports `gorm.DeletedAt` field out of the box).
 
 ### Phase 5: Advanced Features
-*   **Transactions:** GORM has excellent transaction support for atomic operations (e.g., creating User + Admin).
-*   **Pagination:** Implement a reusable pagination helper function.
-*   **Swagger Docs:** Add comments to handlers to auto-generate API docs.
+
+- **Transactions:** GORM has excellent transaction support for atomic operations (e.g., creating User + Admin).
+- **Pagination:** Implement a reusable pagination helper function.
+- **Swagger Docs:** Add comments to handlers to auto-generate API docs.
 
 ## 5. Code Comparison Example
 
 ### Node.js (Prisma + Service)
+
 ```typescript
 const getAllDoctors = async () => {
   return await prisma.doctor.findMany({
     where: { isDeleted: false },
-    include: { specialties: true }
+    include: { specialties: true },
   });
 };
 ```
 
 ### Go (GORM + Repository)
+
 ```go
 func (r *doctorRepository) GetAll() ([]models.Doctor, error) {
     var doctors []models.Doctor
