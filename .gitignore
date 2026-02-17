@@ -6,7 +6,12 @@ dist
 
 /src/generated
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 workflow.md
 node_modules
 >>>>>>> fa6e7a9 (node modules added)
+=======
+workflow.md
+node_modules
+>>>>>>> 31dfd39059c8346a8cf76f61fa1bae80b8fd0e48
